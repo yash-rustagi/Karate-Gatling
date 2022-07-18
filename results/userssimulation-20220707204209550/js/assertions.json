@@ -1,0 +1,10 @@
+{
+  "simulation": "users.UsersSimulation",
+  "simulationId": "userssimulation",
+  "start": 1657226529550,
+  "description": "s",
+  "scenarios": ["Get users"],
+  "assertions": [
+
+  ]
+}
