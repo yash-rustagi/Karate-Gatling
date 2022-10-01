@@ -3,12 +3,20 @@ package com.garate.upload.utility;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+
 
 public class Report {
+
     String id;
     String modified;
     String date;
     String time;
+
+    HashMap<String, String> coveredApis;
+
+    String locationPath;
 
     public String getId() {
         return id;

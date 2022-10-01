@@ -2,7 +2,6 @@ package com.garate.upload.utility;
 // [START storage_create_bucket]
 import com.google.api.gax.paging.Page;
 import com.google.auth.Credentials;
-import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.*;
 import com.google.gson.Gson;
 
@@ -14,15 +13,14 @@ import java.util.ArrayList;
 import java.util.Properties;
 
 public class GoogleCloudUtility {
-    private final String projectId;
-    private final String bucketName;
-    private final String gCpKeyFileName;
+
+
     private final Credentials credentials;
     private final Storage storage;
-    private final String reportListFile;
-    private final String localReportsPath;
+
     private final ReportList gCpReportList;
     private final Report latestLocalReportFolder;
+    private final GCP_Storage gcp_Storage;
 
     /**
      * Constructor: Creates Connection to GCP Storage using GCP properties in the corresponding properties file.
@@ -30,39 +28,32 @@ public class GoogleCloudUtility {
      * @throws Exception
      */
     public GoogleCloudUtility() throws Exception {
-        Properties prop;
-        try {
-            InputStream stream = new FileInputStream("gcp.properties");
-            prop = new Properties();
-            prop.load(stream);
-            this.gCpKeyFileName = prop.getProperty("connectionKey");
-            this.bucketName = prop.getProperty("bucketName");
-            this.projectId = prop.getProperty("projectId");
-            this.reportListFile = prop.getProperty("reportListFile");
-            this.localReportsPath = prop.getProperty("pathToReports");
-        }catch (IOException e){
-            e.printStackTrace();
-            throw e;
-        }
-
-        if (this.gCpKeyFileName!=null){
-            this.credentials = GoogleCredentials.fromStream(new FileInputStream(gCpKeyFileName));
-        }else {
-            throw new Exception("GCP Key File Name Missing");
-        }
+        this.credentials = GCP_Credentials.getInstance().getCredentials();
+        this.gcp_Storage = GCP_Storage.getInstance();
+        Properties bigqueryProp = this.readBigQueryProperties();
 
         if (this.credentials!=null){
-            this.storage = StorageOptions.newBuilder().setCredentials(this.credentials).setProjectId(this.projectId).build().getService();
+            this.storage = StorageOptions.newBuilder().setCredentials(this.credentials).setProjectId(gcp_Storage.getProjectId()).build().getService();
         }else {
             throw new Exception("Storage Missing for the Project Check GCP Settings");
         }
 
         if(!doesBucketExists()){
-            this.storage.create(BucketInfo.newBuilder(this.bucketName).build());
+            this.storage.create(BucketInfo.newBuilder(this.gcp_Storage.getBucketName()).build());
         }
         this.gCpReportList = this.readReportListJson();
         this.latestLocalReportFolder = this.getLatestLocalReportFolder();
     }
+
+    private Properties readBigQueryProperties() throws IOException {
+        InputStream stream = new FileInputStream("gcpBigQuery.properties");
+        Properties properties = new Properties();
+        properties.load(stream);
+        return properties;
+    }
+
+
+
 
     /**
      * Checks if the Bucket with particular name already exists in the project
@@ -71,7 +62,7 @@ public class GoogleCloudUtility {
     private boolean doesBucketExists() {
         Page<Bucket> bucketPage = this.storage.list();
         for (Bucket bucket: bucketPage.iterateAll()) {
-            if (bucket.getName().equalsIgnoreCase(this.bucketName.trim())) {
+            if (bucket.getName().equalsIgnoreCase(this.gcp_Storage.getBucketName().trim())) {
                 return true;
             }
         }
@@ -99,7 +90,7 @@ public class GoogleCloudUtility {
             throw new Exception("Report Folder with Name "+ this.latestLocalReportFolder.getId() + " Already Exists. Please run the Test create new Report.");
         }
         String zipPath = this.latestLocalReportFolder.getId()+"/" + this.latestLocalReportFolder.getId() + ".zip";
-        FileUtilities.zipFolder(this.localReportsPath+"/"+ zipPath,this.localReportsPath+"/"+this.latestLocalReportFolder.getId());
+        FileUtilities.zipFolder(this.gcp_Storage.getLocalReportsPath()+"/"+ zipPath,this.gcp_Storage.getLocalReportsPath()+"/"+this.latestLocalReportFolder.getId());
 
         uploadFile(zipPath);
         return true;
@@ -111,9 +102,9 @@ public class GoogleCloudUtility {
      */
     public void uploadFile(String path){
         String gcpPath = path;
-        String localPath = this.localReportsPath + "/"+path;
+        String localPath = this.gcp_Storage.getLocalReportsPath() + "/"+path;
         try {
-            BlobId blobId = BlobId.of(this.bucketName, gcpPath);
+            BlobId blobId = BlobId.of(this.gcp_Storage.getBucketName(), gcpPath);
             BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
             storage.create(blobInfo, Files.readAllBytes(Path.of(localPath)));
         }catch (IOException e){
@@ -124,7 +115,7 @@ public class GoogleCloudUtility {
     public void uploadContent(String contents, String path){
 
         try {
-            BlobId blobId = BlobId.of(this.bucketName, path);
+            BlobId blobId = BlobId.of(this.gcp_Storage.getBucketName(), path);
             BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
             byte[] content = contents.getBytes(StandardCharsets.UTF_8);
             storage.createFrom(blobInfo, new ByteArrayInputStream(content));
@@ -145,7 +136,7 @@ public class GoogleCloudUtility {
         }else{
             relativePath = this.latestLocalReportFolder.getId() + "/" + folderToUpload;
         }
-        File styleFolder = new File(this.localReportsPath + "/" + relativePath );
+        File styleFolder = new File(this.gcp_Storage.getLocalReportsPath() + "/" + relativePath );
         File[] subFiles = styleFolder.listFiles();
         ArrayList<String> paths = new ArrayList<>();
         for (File f: subFiles) {
@@ -159,7 +150,7 @@ public class GoogleCloudUtility {
 
     public ReportList readReportListJson(){
         try {
-            byte[] content = this.storage.readAllBytes(this.bucketName, this.reportListFile);
+            byte[] content = this.storage.readAllBytes(this.gcp_Storage.getBucketName(), this.gcp_Storage.getReportListFile());
             String fileListJson = new String(content, StandardCharsets.UTF_8);
             Gson gson = new Gson();
             ReportList reportList = gson.fromJson(fileListJson, ReportList.class);
