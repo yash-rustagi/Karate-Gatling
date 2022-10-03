@@ -30,7 +30,7 @@ public class GoogleCloudUtility {
     public GoogleCloudUtility() throws Exception {
         this.credentials = GCP_Credentials.getInstance().getCredentials();
         this.gcp_Storage = GCP_Storage.getInstance();
-        Properties bigqueryProp = this.readBigQueryProperties();
+
 
         if (this.credentials!=null){
             this.storage = StorageOptions.newBuilder().setCredentials(this.credentials).setProjectId(gcp_Storage.getProjectId()).build().getService();
@@ -43,13 +43,6 @@ public class GoogleCloudUtility {
         }
         this.gCpReportList = this.readReportListJson();
         this.latestLocalReportFolder = this.getLatestLocalReportFolder();
-    }
-
-    private Properties readBigQueryProperties() throws IOException {
-        InputStream stream = new FileInputStream("gcpBigQuery.properties");
-        Properties properties = new Properties();
-        properties.load(stream);
-        return properties;
     }
 
 
@@ -167,11 +160,11 @@ public class GoogleCloudUtility {
     public boolean uploadReportListJson(){
         Gson gson = new Gson();
         String uploadJson = gson.toJson(this.gCpReportList);
-        this.uploadContent(uploadJson,this.reportListFile);
+        this.uploadContent(uploadJson,this.gcp_Storage.getReportListFile());
         return true;
     }
     public Report getLatestLocalReportFolder(){
-        File file = new File(this.localReportsPath);
+        File file = new File(this.gcp_Storage.getReportListFile());
         File[] directories = file.listFiles();
         Report tReport = new Report();
         for (File f: directories) {
