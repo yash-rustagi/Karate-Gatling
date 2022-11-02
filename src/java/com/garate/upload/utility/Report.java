@@ -68,19 +68,19 @@ public class Report {
         return report;
     }
 
-    public Timestamp getModifiedTimeStamp(){
-        DateTimeFormatter formatDateTime = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
-        LocalDateTime localDateTime = LocalDateTime.from(formatDateTime.parse(this.getModified()));
-        return Timestamp.valueOf(localDateTime);
-    }
+        public Timestamp getModifiedTimeStamp(){
+            DateTimeFormatter formatDateTime = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+            LocalDateTime localDateTime = LocalDateTime.from(formatDateTime.parse(this.getModified()));
+            return Timestamp.valueOf(localDateTime);
+        }
 
-    public static Timestamp getModifiedTimeStamp(String timeStamp){
-        DateTimeFormatter formatDateTime = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
-        LocalDateTime localDateTime = LocalDateTime.from(formatDateTime.parse(timeStamp));
-        return Timestamp.valueOf(localDateTime);
-    }
+        public static Timestamp getModifiedTimeStamp(String timeStamp){
+            DateTimeFormatter formatDateTime = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+            LocalDateTime localDateTime = LocalDateTime.from(formatDateTime.parse(timeStamp));
+            return Timestamp.valueOf(localDateTime);
+        }
 
-    public static boolean isLatestTimeStamp(Timestamp compareWithTs, Timestamp compareToTs){
-        return compareWithTs.after(compareToTs);
-    }
+        public static boolean isLatestTimeStamp(Timestamp compareWithTs, Timestamp compareToTs){
+            return compareWithTs.after(compareToTs);
+        }
 }
