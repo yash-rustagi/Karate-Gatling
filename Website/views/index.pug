@@ -1,0 +1,21 @@
+extends default
+
+block content
+  div.container
+    h3 Report List
+  table(class='table table-hover')
+    thead
+      tr
+        th Report Name
+        th Execution Date 
+        th Execution Time
+        th Execution Time Stamp
+    tbody
+      each report in reports
+        tr
+          td #{report.id}
+          td #{report.date}
+          td #{report.time}
+          td 
+            a(href=`https://storage.googleapis.com/gatling-reports-demo/${report.id}/${report.id}.zip`)
+              | #{report.modified}

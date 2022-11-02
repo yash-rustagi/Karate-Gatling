@@ -2,6 +2,7 @@ package users
 
 import com.intuit.karate.gatling.PreDef._
 import io.gatling.core.Predef._
+import io.gatling.core.structure.ScenarioBuilder
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -13,9 +14,13 @@ class UsersSimulation extends Simulation {
 //    "/users/id" -> Nil
 //  )
 
-  val GetUsers = scenario(name = "Get users").exec(karateFeature(name = "classpath:users/users.feature"))
+  val userCount = System.getProperty("USER_COUNT").toInt
+  println(userCount)
+
+  val GetUsers: ScenarioBuilder = scenario(name = "Get users").exec(karateFeature(name = "classpath:users/users.feature"))
 
   setUp(
-    GetUsers.inject(rampUsers(10) during (5 seconds))
+    GetUsers.inject(rampUsers(userCount) during (5 seconds))
   )
+
 }
